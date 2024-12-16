@@ -2,7 +2,7 @@
 
 # Website Blocker
 
-A simple set of bash scripts to block distracting websites on macOS.
+A simple set of Shell scripts to block distracting websites on macOS.
 
 ## Features
 
