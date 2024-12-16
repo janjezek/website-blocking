@@ -1,12 +1,13 @@
+![Website Blocker Logo](website-blocker-logo.png "Website Blocker Logo")
+
 # Website Blocker
 
 A simple set of bash scripts to block distracting websites on macOS.
 
 ## Features
 
-- Block websites permanently by editing hosts file
-- Schedule website blocking during specific hours
-- Automatic backup of original hosts file
+- Block websites permanently
+- Schedule website blocking during specific hours & days
 - Support for both with and without 'www' subdomain
 
 ## How It Works
