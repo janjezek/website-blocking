@@ -1,90 +1,146 @@
-# Website Blocker for macOS
+# Website Blocker
 
-A simple set of bash scripts to block distracting websites on macOS. You can either block websites permanently or schedule blocking during specific hours.
+A simple set of bash scripts to block distracting websites on macOS.
 
 ## Features
 
-- Block/unblock websites easily using terminal commands
-- Schedule website blocking during specific hours (e.g., work hours)
-- Backup of original hosts file
+- Block websites permanently by editing hosts file
+- Schedule website blocking during specific hours
+- Automatic backup of original hosts file
 - Support for both with and without 'www' subdomain
 
-## Prerequisites
+## How It Works
 
-- macOS operating system
-- Administrative privileges
+The blocking mechanism works by redirecting website domains to your local machine (127.0.0.1) through the `/etc/hosts` file. When you try to access a blocked website, your computer redirects the request to itself instead of the actual website server.
 
-## Installation
+## Part 1: Blocking Websites Permanently
 
-1. Clone this repository:
+You can block websites by editing the hosts file manually:
+
+1. Open Terminal and edit the hosts file:
 
 ```bash
-git clone https://github.com/yourusername/website-blocker
-cd website-blocker
+sudo nano /etc/hosts
+```
+
+2. Add the websites you want to block by adding these lines:
+
+```bash
+127.0.0.1   facebook.com
+127.0.0.1   www.facebook.com
+127.0.0.1   youtube.com
+127.0.0.1   www.youtube.com
+```
+
+3. Save the file:
+
+   - Press `Control + O` to save
+   - Press `Enter` to confirm
+   - Press `Control + X` to exit
+
+4. Flush the DNS cache:
+
+```bash
+sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+```
+
+## Part 2: Scheduled Website Blocking
+
+For blocking websites during specific hours, you can create and use blocking scripts. Here's how to set it up:
+
+1. Create two scripts:
+
+First, create `block-sites.sh` ([source](https://github.com/janjezek/website-blocking/blob/main/block-sites.sh)):
+
+```bash
+nano ~/block-sites.sh
+```
+
+Add this content:
+
+```bash
+#!/bin/bash
+BLOCKED_SITES=(
+    "127.0.0.1   facebook.com"
+    "127.0.0.1   www.facebook.com"
+    "127.0.0.1   youtube.com"
+    "127.0.0.1   www.youtube.com"
+)
+
+# Backup the current /etc/hosts file
+sudo cp /etc/hosts /etc/hosts.bak
+
+# Add blocked sites if not already present
+for SITE in "${BLOCKED_SITES[@]}"; do
+    if ! grep -q "$SITE" /etc/hosts; then
+        echo "$SITE" | sudo tee -a /etc/hosts > /dev/null
+    fi
+done
+
+# Flush DNS cache
+sudo dscacheutil -flushcache
+sudo killall -HUP mDNSResponder
+```
+
+Then create `unblock-sites.sh` ([source](https://github.com/janjezek/website-blocking/blob/main/unblock-sites.sh)):
+
+```bash
+nano ~/unblock-sites.sh
+```
+
+Add this content:
+
+```bash
+#!/bin/bash
+
+# Check if backup exists and restore it
+if [ -f /etc/hosts.bak ]; then
+    sudo cp /etc/hosts.bak /etc/hosts
+    sudo dscacheutil -flushcache
+    sudo killall -HUP mDNSResponder
+fi
 ```
 
 2. Make the scripts executable:
 
 ```bash
-chmod +x block-sites.sh unblock-sites.sh
+chmod +x ~/block-sites.sh ~/unblock-sites.sh
 ```
 
-## Usage
-
-### Manual Blocking/Unblocking
-
-1. To block websites:
-
-```bash
-./block-sites.sh
-```
-
-2. To unblock websites:
-
-```bash
-./unblock-sites.sh
-```
-
-### Scheduled Blocking (During Work Hours)
-
-1. Open your crontab file:
+3. Set up scheduled blocking using crontab:
 
 ```bash
 export EDITOR=nano
 crontab -e
 ```
 
-2. Add the following lines to block during work hours (9 AM to 5 PM, Monday to Friday):
+4. Add the scheduling rules. Here are some examples:
 
 ```bash
-0 9 * * 1-5 /full/path/to/block-sites.sh
-0 17 * * 1-5 /full/path/to/unblock-sites.sh
+# Block from 9 AM to 5 PM on weekdays
+0 9 * * 1-5 ~/block-sites.sh
+0 17 * * 1-5 ~/unblock-sites.sh
+
+# Block from 10 AM to 6 PM every day
+0 10 * * * ~/block-sites.sh
+0 18 * * * ~/unblock-sites.sh
+
+# Block during lunch hour (12 PM to 1 PM)
+0 12 * * * ~/block-sites.sh
+0 13 * * * ~/unblock-sites.sh
 ```
 
-Note: Replace `/full/path/to/` with the actual path to your scripts.
+Note:
 
-### Customizing Blocked Websites
+- Crontab format is: `minute hour day month weekday command`
+- Weekdays are: 1=Monday through 7=Sunday
 
-To modify the list of blocked websites, edit the `BLOCKED_SITES` array in `block-sites.sh`:
+You can run these scripts manually at any time:
 
 ```bash
-BLOCKED_SITES=(
-    "127.0.0.1   facebook.com"
-    "127.0.0.1   www.facebook.com"
-    # Add more sites here
-)
+bash ~/block-sites.sh    # To block websites
+bash ~/unblock-sites.sh  # To unblock websites
 ```
-
-## How It Works
-
-The scripts modify the `/etc/hosts` file to redirect specified domains to the localhost (127.0.0.1), effectively blocking access to these websites. The original hosts file is backed up before any modifications.
-
-## Important Notes
-
-- You need administrative privileges to run these scripts
-- The first time you run the scripts, you'll be prompted for your password
-- Changes might require a browser restart to take effect
-- Some browsers might cache DNS entries; you might need to clear browser cache
 
 ## Troubleshooting
 
@@ -92,40 +148,14 @@ If websites are still accessible after blocking:
 
 1. Clear your browser cache
 2. Restart your browser
-3. Check if the sites are properly added to `/etc/hosts`:
-   ```bash
-   cat /etc/hosts
-   ```
-4. Ensure DNS cache was flushed successfully:
-   ```bash
-   sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
-   ```
+3. Verify hosts file content:
 
-## Common Issues
+```bash
+cat /etc/hosts
+```
 
-1. **Permission Denied**: Make sure you run the scripts with proper permissions:
+4. Refresh DNS cache:
 
-   ```bash
-   sudo ./block-sites.sh
-   ```
-
-2. **Changes Not Taking Effect**: Try closing and reopening your browser, or clearing DNS cache:
-   ```bash
-   sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
-   ```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Support
-
-If you encounter any issues or have questions, please file an issue on the GitHub repository.
+```bash
+sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+```
