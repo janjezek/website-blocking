@@ -160,3 +160,7 @@ cat /etc/hosts
 ```bash
 sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
 ```
+
+## License
+
+[MIT License](LICENSE)
