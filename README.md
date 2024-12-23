@@ -1,5 +1,3 @@
-<!-- ![Website Blocker Logo](website-blocker-logo.png "Website Blocker Logo") -->
-
 # Website Blocker for macOS
 
 A simple set of Shell scripts to block distracting websites on macOS.
@@ -7,7 +5,7 @@ A simple set of Shell scripts to block distracting websites on macOS.
 ## Features
 
 - Block websites permanently
-- On-Demand website blocking
+- On-demand website blocking
 - Support for both with and without 'www' subdomain
 
 ## How It Works
