@@ -1,20 +1,20 @@
-![Website Blocker Logo](website-blocker-logo.png "Website Blocker Logo")
+<!-- ![Website Blocker Logo](website-blocker-logo.png "Website Blocker Logo") -->
 
-# Website Blocker
+# Website Blocker for macOS
 
 A simple set of Shell scripts to block distracting websites on macOS.
 
 ## Features
 
 - Block websites permanently
-- Schedule website blocking during specific hours & days
+- On-Demand website blocking
 - Support for both with and without 'www' subdomain
 
 ## How It Works
 
 The blocking mechanism works by redirecting website domains to your local machine (127.0.0.1) through the `/etc/hosts` file. When you try to access a blocked website, your computer redirects the request to itself instead of the actual website server.
 
-## Part 1: Blocking Websites Permanently
+## Permanent Website Blocking
 
 You can block websites by editing the hosts file manually:
 
@@ -45,9 +45,9 @@ sudo nano /etc/hosts
 sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
 ```
 
-## Part 2: Scheduled Website Blocking
+## On-Demand Website Blocking
 
-For blocking websites during specific hours, you can create and use blocking scripts. Here's how to set it up:
+This feature allows you to manually block and unblock websites as needed using shell scripts. It provides flexibility to control access to specific websites temporarily without making permanent changes to the `/etc/hosts` file.
 
 1. Create two scripts:
 
@@ -108,35 +108,7 @@ fi
 chmod +x ~/block-sites.sh ~/unblock-sites.sh
 ```
 
-3. Set up scheduled blocking using crontab:
-
-```bash
-export EDITOR=nano
-crontab -e
-```
-
-4. Add the scheduling rules. Here are some examples:
-
-```bash
-# Block from 9 AM to 5 PM on weekdays
-0 9 * * 1-5 ~/block-sites.sh
-0 17 * * 1-5 ~/unblock-sites.sh
-
-# Block from 10 AM to 6 PM every day
-0 10 * * * ~/block-sites.sh
-0 18 * * * ~/unblock-sites.sh
-
-# Block during lunch hour (12 PM to 1 PM)
-0 12 * * * ~/block-sites.sh
-0 13 * * * ~/unblock-sites.sh
-```
-
-Note:
-
-- Crontab format is: `minute hour day month weekday command`
-- Weekdays are: 1=Monday through 7=Sunday
-
-You can run these scripts manually at any time:
+3. You can run these scripts manually at any time:
 
 ```bash
 bash ~/block-sites.sh    # To block websites
